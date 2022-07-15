@@ -1,0 +1,251 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Список заказов</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <h2>Список заказов</h2>
+    <form name="userForm">
+        <input type="hidden" name="id" value="0" />
+        <div class="mb-3">
+            <label class="form-label" for="SenderCity">Город отправителя:</label>
+            <input class="form-control" name="SenderCity" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="SenderAdress">Адрес отправителя:</label>
+            <input class="form-control" name="SenderAdress" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="RecipientCity">Город получателя:</label>
+            <input class="form-control" name="RecipientCity" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="AddressRecipient">Адрес получателя:</label>
+            <input class="form-control" name="AddressRecipient" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="ParcelWeight">Вес груза:</label>
+            <input class="form-control" name="ParcelWeight" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="Date">Дата:</label>
+            <input class="form-control" name="Date" required />
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+            <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+        </div>
+    </form>
+    <table class="table table-condensed table-striped table-bordered">
+        <thead><tr><th>Город отправителя</th><th>Адрес отправителя</th><th>Город получателя</th><th>Адрес получателя</th><th>Вес груза</th><th>Дата</th><th></th></tr></thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+    // Получение всех пользователей
+        async function getOrders() {
+            // отправляет запрос и получаем ответ
+            const response = await fetch("/api/users", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // если запрос прошел нормально
+            if (response.ok == true) {
+                // получаем данные
+                const orders = await response.json();
+                const rows = document.querySelector("tbody");
+                // добавляем полученные элементы в таблицу
+               orders.forEach(order => rows.append(row(order)));
+                orders.map(order => {
+                    console.log(order);
+                })
+            }
+        }
+        // Получение одного пользователя
+        async function getOrder(id) {
+            const response = await fetch("/api/users/" + id, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const order = await response.json();
+                const form = document.forms["userForm"];
+                form.elements["id"].value = order.id;
+                form.elements["SenderCity"].value = order.SenderCity;
+                form.elements["SenderAdress"].value = order.SenderAdress;
+                form.elements["RecipientCity"].value = order.RecipientCity;
+                form.elements["AddressRecipient"].value = order.AddressRecipient;
+                form.elements["ParcelWeight"].value = order.ParcelWeight;
+                form.elements["Date"].value = order.Date;
+            }
+            else {
+                // если произошла ошибка, получаем сообщение об ошибке
+                const error = await response.json();
+                console.log(error.message); // и выводим его на консоль
+            }
+        }
+        // Добавление пользователя
+        async function createOrder(orderSenderCity, orderSenderAdress, orderRecipientCity, orderAddressRecipient, orderParcelWeight, orderDate) {
+
+            const response = await fetch("api/users", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    SenderCity: orderSenderCity,
+                    SenderAdress: orderSenderAdress,
+                    RecipientCity: orderRecipientCity,
+                    AddressRecipient: orderAddressRecipient,
+                    ParcelWeight: orderParcelWeight,
+                    Date: orderDate,
+                })
+            });
+            if (response.ok === true) {
+                const order = await response.json();
+                reset();
+                document.querySelector("tbody").append(row(order));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Изменение пользователя
+        async function editOrder(orderId, orderSenderCity, orderSenderAdress, orderRecipientCity, orderAddressRecipient, orderParcelWeight, orderDate) {
+            const response = await fetch("api/users", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: orderId,
+                    SenderCity: orderSenderCity,
+                    SenderAdress: orderSenderAdress,
+                    RecipientCity: orderRecipientCity,
+                    AddressRecipient: orderAddressRecipient,
+                    ParcelWeight: orderParcelWeight,
+                    Date: orderDate,
+                })
+            });
+            if (response.ok === true) {
+                const order = await response.json();
+                reset();
+                document.querySelector("tr[data-rowid='" + order.id + "']").replaceWith(row(order));
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+        // Удаление пользователя
+        async function deleteOrder(id) {
+            const response = await fetch("/api/users/" + id, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const order = await response.json();
+                document.querySelector("tr[data-rowid='" + order.id + "']").remove();
+            }
+            else {
+                const error = await response.json();
+                console.log(error.message);
+            }
+        }
+
+        // сброс данных формы после отправки
+        function reset() {
+            const form = document.forms["userForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+        // создание строки для таблицы
+        function row(order) {
+
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", order.id);
+
+            const SenderCityTd = document.createElement("td");
+            SenderCityTd.append(order.senderCity);
+            tr.append(SenderCityTd);
+
+
+            const SenderAdressTd = document.createElement("td");
+            SenderAdressTd.append(order.senderAdress);
+            tr.append(SenderAdressTd);
+            console.log(order.SenderAdress);
+
+            const RecipientCityTd = document.createElement("td");
+            RecipientCityTd.append(order.recipientCity);
+            tr.append(RecipientCityTd);
+
+            const AddressRecipientTd = document.createElement("td");
+            AddressRecipientTd.append(order.addressRecipient);
+            tr.append(AddressRecipientTd);
+
+            const ParcelWeightTd = document.createElement("td");
+            ParcelWeightTd.append(order.parcelWeight);
+            tr.append(ParcelWeightTd);
+
+            const DateTd = document.createElement("td");
+            DateTd.append(order.date);
+            tr.append(DateTd);
+
+
+            const linksTd = document.createElement("td");
+
+            const editLink = document.createElement("a");
+            editLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            editLink.append("Изменить");
+            editLink.addEventListener("click", e => {
+
+                e.preventDefault();
+                getOrder(order.id);
+            });
+            linksTd.append(editLink);
+
+            const removeLink = document.createElement("a");
+            removeLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            removeLink.append("Удалить");
+            removeLink.addEventListener("click", e => {
+
+                e.preventDefault();
+                deleteOrder(order.id);
+            });
+
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+
+            return tr;
+        }
+        // сброс значений формы
+        document.getElementById("reset").addEventListener("click", e => {
+
+            e.preventDefault();
+            reset();
+        })
+
+        // отправка формы
+        document.forms["userForm"].addEventListener("submit", e => {
+            e.preventDefault();
+            const form = document.forms["userForm"];
+            const id = form.elements["id"].value;
+            const SenderCity = form.elements["SenderCity"].value;
+            const SenderAdress = form.elements["SenderAdress"].value;
+            const RecipientCity = form.elements["RecipientCity"].value;
+            const AddressRecipient = form.elements["AddressRecipient"].value;
+            const ParcelWeight = form.elements["ParcelWeight"].value;
+            const Date = form.elements["Date"].value;
+
+            if (id == 0)
+                createOrder(SenderCity, SenderAdress, RecipientCity, AddressRecipient, ParcelWeight, Date);
+            else
+                editOrder(id, SenderCity, SenderAdress, RecipientCity, AddressRecipient, ParcelWeight, Date);
+        });
+
+        // загрузка пользователей
+        getOrders();
+    </script>
+</body>
+</html>
