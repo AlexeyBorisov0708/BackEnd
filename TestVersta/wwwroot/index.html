@@ -46,26 +46,20 @@
     </table>
 
     <script>
-    // Получение всех пользователей
         async function getOrders() {
-            // отправляет запрос и получаем ответ
             const response = await fetch("/api/users", {
                 method: "GET",
                 headers: { "Accept": "application/json" }
             });
-            // если запрос прошел нормально
             if (response.ok == true) {
-                // получаем данные
                 const orders = await response.json();
                 const rows = document.querySelector("tbody");
-                // добавляем полученные элементы в таблицу
                orders.forEach(order => rows.append(row(order)));
                 orders.map(order => {
                     console.log(order);
                 })
             }
         }
-        // Получение одного пользователя
         async function getOrder(id) {
             const response = await fetch("/api/users/" + id, {
                 method: "GET",
@@ -83,12 +77,10 @@
                 form.elements["Date"].value = order.Date;
             }
             else {
-                // если произошла ошибка, получаем сообщение об ошибке
                 const error = await response.json();
-                console.log(error.message); // и выводим его на консоль
+                console.log(error.message); 
             }
         }
-        // Добавление пользователя
         async function createOrder(orderSenderCity, orderSenderAdress, orderRecipientCity, orderAddressRecipient, orderParcelWeight, orderDate) {
 
             const response = await fetch("api/users", {
@@ -113,7 +105,6 @@
                 console.log(error.message);
             }
         }
-        // Изменение пользователя
         async function editOrder(orderId, orderSenderCity, orderSenderAdress, orderRecipientCity, orderAddressRecipient, orderParcelWeight, orderDate) {
             const response = await fetch("api/users", {
                 method: "PUT",
@@ -138,7 +129,6 @@
                 console.log(error.message);
             }
         }
-        // Удаление пользователя
         async function deleteOrder(id) {
             const response = await fetch("/api/users/" + id, {
                 method: "DELETE",
@@ -153,8 +143,6 @@
                 console.log(error.message);
             }
         }
-
-        // сброс данных формы после отправки
         function reset() {
             const form = document.forms["userForm"];
             form.reset();
@@ -244,7 +232,6 @@
                 editOrder(id, SenderCity, SenderAdress, RecipientCity, AddressRecipient, ParcelWeight, Date);
         });
 
-        // загрузка пользователей
         getOrders();
     </script>
 </body>
